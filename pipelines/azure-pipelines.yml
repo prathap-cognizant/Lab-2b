@@ -27,7 +27,7 @@ stages:
     - task: AzureCLI@2
       displayName: Build and Push using az acr build
       inputs:
-        azureSubscription: 'azure-rm-connection'
+        azureSubscription: 'genai-devops-svc-ch-1'
         scriptType: 'bash'
         scriptLocation: 'inlineScript'
         inlineScript: |
