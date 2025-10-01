@@ -20,7 +20,7 @@ stages:
   jobs:
   - job: Build
     pool:
-      vmImage: 'ubuntu-latest'
+      name: Default
     steps:
     - checkout: self
 
