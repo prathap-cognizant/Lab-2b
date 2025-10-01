@@ -31,7 +31,7 @@ stages:
         scriptType: 'ps'
         scriptLocation: 'inlineScript'
         inlineScript: |
-          az acr build --registry $(acrName) --image $(imageName):$(Build.BuildId) pipelines/src/
+          az acr build --registry $(acrName) --image $(imageName):$(Build.BuildId) src/
 
 # -------------------
 # 2. Security Scan Stage
