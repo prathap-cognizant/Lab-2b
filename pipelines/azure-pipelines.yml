@@ -44,15 +44,21 @@ stages:
     pool:
       name: Default
     steps:
-    - script: |
-        echo Defender for Containers will auto-scan the image in ACR.
+    - task: PowerShell@2
       displayName: "Info: Defender for Containers enabled"
+      inputs:
+        targetType: 'inline'
+        script: |
+          Write-Host "Defender for Containers will auto-scan the image in ACR."
 
-    - script: |
-        Invoke-WebRequest -Uri https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.ps1 -OutFile install-trivy.ps1
-        .\install-trivy.ps1
-        .\trivy.exe image --exit-code 1 --severity CRITICAL,HIGH $(acrName).azurecr.io/$(imageName):$(Build.BuildId)
+    - task: PowerShell@2
       displayName: "Run Trivy Scan"
+      inputs:
+        targetType: 'inline'
+        script: |
+          Invoke-WebRequest -Uri https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.ps1 -OutFile install-trivy.ps1
+          .\install-trivy.ps1
+          .\trivy.exe image --exit-code 1 --severity CRITICAL,HIGH $(acrName).azurecr.io/$(imageName):$(Build.BuildId)
 
 # -------------------
 # 3. Deploy Stage
