@@ -27,10 +27,10 @@ stages:
     - task: Docker@2
       displayName: Build and Push to ACR
       inputs:
-        containerRegistry: '$(acrName)'
+        containerRegistry: 'acr-service-connection'
         repository: '$(imageName)'
         command: 'buildAndPush'
-        Dockerfile: 'src/Dockerfile'
+        Dockerfile: 'pipelines/src/Dockerfile'
         tags: |
           $(Build.BuildId)
 
@@ -60,7 +60,7 @@ stages:
 # 3. Deploy Stage
 # -------------------
 - stage: Deploy
-  displayName: Deploy ACA and APIM
+  displayName: Deploy ACA and APIM using Bicep
   dependsOn: SecurityScan
   jobs:
   - job: Deploy
@@ -69,26 +69,9 @@ stages:
     steps:
     - task: AzureCLI@2
       inputs:
-        azureSubscription: 'azure-connection'
+        azureSubscription: 'genai-devops-svc-ch-1'
         scriptType: 'bash'
         scriptLocation: 'inlineScript'
         inlineScript: |
-          echo "Deploying Container App and APIM..."
-          az containerapp create \
-            --name $(containerAppName) \
-            --resource-group $(resourceGroup) \
-            --image $(acrName).azurecr.io/$(imageName):$(Build.BuildId) \
-            --environment $(containerAppName)-env \
-            --ingress external \
-            --target-port 8080 \
-            --registry-server $(acrName).azurecr.io
-
-          # Configure APIM (example: add API pointing to ACA)
-          az apim api create \
-            --resource-group $(resourceGroup) \
-            --service-name $(apimName) \
-            --api-id claim-status-api \
-            --path claim-status \
-            --display-name "Claim Status API" \
-            --service-url "https://$(containerAppName).azurecontainerapps.io" \
-            --protocols https
+          az group create --name $(resourceGroup) --location $(location)
+          az deployment group create             --resource-group $(resourceGroup)             --template-file pipelines/infra/main.bicep             --parameters containerAppName=$(containerAppName)                          containerImage=$(acrName).azurecr.io/$(imageName):$(Build.BuildId)                          acrName=$(acrName)                          apimName=$(apimName)
