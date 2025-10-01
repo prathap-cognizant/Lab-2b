@@ -5,16 +5,20 @@ trigger:
 
 variables:
   imageName: 'claim-status-api'
-  tag: '$(Build.BuildId)'
   acrName: 'prathapacr'
-  containerRegistry: 'acr-service-connection'  # Docker Registry service connection name
+  resourceGroup: 'prathapRG'
+  containerAppName: 'claim-status-app'
+  apimName: 'claim-status-apim'
+  location: 'eastus'
 
 stages:
-- stage: BuildAndPush
-  displayName: Build and Push Docker Image to ACR
+# -------------------
+# 1. Build Stage
+# -------------------
+- stage: Build
+  displayName: Build and Push Docker Image
   jobs:
   - job: Build
-    displayName: Build and Push
     pool:
       vmImage: 'ubuntu-latest'
     steps:
@@ -23,10 +27,68 @@ stages:
     - task: Docker@2
       displayName: Build and Push to ACR
       inputs:
-        containerRegistry: '$(containerRegistry)'   # Must be Docker Registry type
+        containerRegistry: '$(acrName)'
         repository: '$(imageName)'
         command: 'buildAndPush'
         Dockerfile: 'src/Dockerfile'
-        buildContext: 'src'
         tags: |
-          $(tag)
+          $(Build.BuildId)
+
+# -------------------
+# 2. Security Scan Stage
+# -------------------
+- stage: SecurityScan
+  displayName: Security Scan
+  dependsOn: Build
+  jobs:
+  - job: Scan
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    # Option 1: Defender for Containers (auto-scan after push)
+    - script: |
+        echo "Defender for Containers will auto-scan the image in ACR."
+      displayName: "Info: Defender for Containers enabled"
+
+    # Option 2: Fail pipeline on critical/high vulnerabilities using Trivy
+    - script: |
+        curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh
+        ./trivy image --exit-code 1 --severity CRITICAL,HIGH $(acrName).azurecr.io/$(imageName):$(Build.BuildId)
+      displayName: "Run Trivy Scan"
+
+# -------------------
+# 3. Deploy Stage
+# -------------------
+- stage: Deploy
+  displayName: Deploy ACA and APIM
+  dependsOn: SecurityScan
+  jobs:
+  - job: Deploy
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: 'azure-connection'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          echo "Deploying Container App and APIM..."
+          az containerapp create \
+            --name $(containerAppName) \
+            --resource-group $(resourceGroup) \
+            --image $(acrName).azurecr.io/$(imageName):$(Build.BuildId) \
+            --environment $(containerAppName)-env \
+            --ingress external \
+            --target-port 8080 \
+            --registry-server $(acrName).azurecr.io
+
+          # Configure APIM (example: add API pointing to ACA)
+          az apim api create \
+            --resource-group $(resourceGroup) \
+            --service-name $(apimName) \
+            --api-id claim-status-api \
+            --path claim-status \
+            --display-name "Claim Status API" \
+            --service-url "https://$(containerAppName).azurecontainerapps.io" \
+            --protocols https
