@@ -16,7 +16,7 @@ stages:
 # 1. Build Stage
 # -------------------
 - stage: Build
-  displayName: Build and Push Docker Image
+  displayName: Build and Push Docker Image using ACR Build
   jobs:
   - job: Build
     pool:
@@ -24,15 +24,14 @@ stages:
     steps:
     - checkout: self
 
-    - task: Docker@2
-      displayName: Build and Push to ACR
+    - task: AzureCLI@2
+      displayName: Build and Push using az acr build
       inputs:
-        containerRegistry: 'acr-service-connection'
-        repository: '$(imageName)'
-        command: 'buildAndPush'
-        Dockerfile: 'src/Dockerfile'
-        tags: |
-          $(Build.BuildId)
+        azureSubscription: 'azure-rm-connection'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          az acr build --registry $(acrName) --image $(imageName):$(Build.BuildId) pipelines/src/
 
 # -------------------
 # 2. Security Scan Stage
@@ -43,14 +42,12 @@ stages:
   jobs:
   - job: Scan
     pool:
-      vmImage: 'ubuntu-latest'
+      name: Default
     steps:
-    # Option 1: Defender for Containers (auto-scan after push)
     - script: |
         echo "Defender for Containers will auto-scan the image in ACR."
       displayName: "Info: Defender for Containers enabled"
 
-    # Option 2: Fail pipeline on critical/high vulnerabilities using Trivy
     - script: |
         curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh
         ./trivy image --exit-code 1 --severity CRITICAL,HIGH $(acrName).azurecr.io/$(imageName):$(Build.BuildId)
@@ -65,7 +62,7 @@ stages:
   jobs:
   - job: Deploy
     pool:
-      vmImage: 'ubuntu-latest'
+      name: Default
     steps:
     - task: AzureCLI@2
       inputs:
@@ -74,4 +71,4 @@ stages:
         scriptLocation: 'inlineScript'
         inlineScript: |
           az group create --name $(resourceGroup) --location $(location)
-          az deployment group create --resource-group $(resourceGroup) --template-file pipelines/infra/main.bicep             --parameters containerAppName=$(containerAppName)                          containerImage=$(acrName).azurecr.io/$(imageName):$(Build.BuildId)                          acrName=$(acrName)                          apimName=$(apimName)
+          az deployment group create  --resource-group $(resourceGroup) --template-file pipelines/infra/main.bicep             --parameters containerAppName=$(containerAppName)                          containerImage=$(acrName).azurecr.io/$(imageName):$(Build.BuildId)                          acrName=$(acrName)                          apimName=$(apimName)
