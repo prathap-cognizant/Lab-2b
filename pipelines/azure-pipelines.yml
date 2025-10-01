@@ -37,28 +37,22 @@ stages:
 # 2. Security Scan Stage
 # -------------------
 - stage: SecurityScan
-  displayName: Security Scan
+  displayName: Security Scan with Snyk
   dependsOn: Build
   jobs:
   - job: Scan
     pool:
       name: Default
     steps:
-    - task: PowerShell@2
-      displayName: "Info: Defender for Containers enabled"
+    - task: SnykSecurityScan@1
+      displayName: "Snyk Container Scan"
       inputs:
-        targetType: 'inline'
-        script: |
-          Write-Host "Defender for Containers will auto-scan the image in ACR."
+        serviceConnectionEndpoint: 'Snyk-Service-Connection'  # Created in Project Settings → Service Connections
+        testType: 'container'
+        dockerImageName: '$(acrName).azurecr.io/$(imageName):$(Build.BuildId)'
+        severityThreshold: 'high'   # Fail pipeline if vulnerabilities >= high
+        monitorWhen: 'always'       # Upload results to Snyk dashboard
 
-    - task: PowerShell@2
-      displayName: "Run Trivy Scan"
-      inputs:
-        targetType: 'inline'
-        script: |
-          Invoke-WebRequest -Uri https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.ps1 -OutFile install-trivy.ps1
-          .\install-trivy.ps1
-          .\trivy.exe image --exit-code 1 --severity CRITICAL,HIGH $(acrName).azurecr.io/$(imageName):$(Build.BuildId)
 
 # -------------------
 # 3. Deploy Stage
