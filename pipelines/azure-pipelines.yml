@@ -76,13 +76,16 @@ stages:
       inputs:
         targetType: 'inline'
         script: |
-          $version = "v0.66.0"
-          $trivyUrl = "https://github.com/aquasecurity/trivy/releases/download/$version/trivy_$($version)_Windows-64bit.zip"
-          $zipPath = "trivy.zip"
+          $trivyUrl = "https://github.com/aquasecurity/trivy/releases/download/v0.67.0/trivy_0.67.0_Windows-64bit.zip"
+          $zipPath = "$(System.DefaultWorkingDirectory)\trivy.zip"
           $extractPath = "$(System.DefaultWorkingDirectory)\trivy"
 
+          Write-Host "Downloading Trivy from $trivyUrl"
           Invoke-WebRequest -Uri $trivyUrl -OutFile $zipPath
-          Expand-Archive -Path $zipPath -DestinationPath $extractPath
-          $trivyExe = Join-Path $extractPath "trivy.exe"
 
+          Write-Host "Extracting Trivy..."
+          Expand-Archive -Path $zipPath -DestinationPath $extractPath -Force
+
+          $trivyExe = Join-Path $extractPath "trivy.exe"
+          Write-Host "Running Trivy scan..."
           & $trivyExe image --exit-code 1 --severity CRITICAL,HIGH "$(acrName).azurecr.io/$(imageName):$(Build.BuildId)"
