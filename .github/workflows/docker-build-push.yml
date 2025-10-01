@@ -8,8 +8,6 @@ on:
 env:
   IMAGE_NAME: claim-status-api
   ACR_NAME: prathapacr
-  RESOURCE_GROUP: prathapRG
-  AZURE_SUBSCRIPTION: azure-connection
 
 jobs:
   build-and-push:
