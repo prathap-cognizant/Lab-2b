@@ -30,7 +30,7 @@ stages:
         containerRegistry: 'acr-service-connection'
         repository: '$(imageName)'
         command: 'buildAndPush'
-        Dockerfile: 'pipelines/src/Dockerfile'
+        Dockerfile: 'src/Dockerfile'
         tags: |
           $(Build.BuildId)
 
@@ -74,4 +74,4 @@ stages:
         scriptLocation: 'inlineScript'
         inlineScript: |
           az group create --name $(resourceGroup) --location $(location)
-          az deployment group create             --resource-group $(resourceGroup)             --template-file pipelines/infra/main.bicep             --parameters containerAppName=$(containerAppName)                          containerImage=$(acrName).azurecr.io/$(imageName):$(Build.BuildId)                          acrName=$(acrName)                          apimName=$(apimName)
+          az deployment group create --resource-group $(resourceGroup) --template-file pipelines/infra/main.bicep             --parameters containerAppName=$(containerAppName)                          containerImage=$(acrName).azurecr.io/$(imageName):$(Build.BuildId)                          acrName=$(acrName)                          apimName=$(apimName)
