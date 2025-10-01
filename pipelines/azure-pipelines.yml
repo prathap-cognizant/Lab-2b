@@ -76,16 +76,27 @@ stages:
       inputs:
         targetType: 'inline'
         script: |
-          $trivyUrl = "https://github.com/aquasecurity/trivy/releases/download/v0.66.0/trivy_0.66.0_Windows-64bit.zip"
+          $versions = @("0.67.0", "0.66.0", "0.43.1")
           $zipPath = "$(System.DefaultWorkingDirectory)\trivy.zip"
           $extractPath = "$(System.DefaultWorkingDirectory)\trivy"
+          $downloaded = $false
 
-          Write-Host "Downloading Trivy from $trivyUrl"
-          Invoke-WebRequest -Uri $trivyUrl -OutFile $zipPath
+          foreach ($version in $versions) {
+            $url = "https://github.com/aquasecurity/trivy/releases/download/v$version/trivy_${version}_Windows-64bit.zip"
+            Write-Host "Trying Trivy version $version from $url"
+            try {
+              Invoke-WebRequest -Uri $url -OutFile $zipPath -ErrorAction Stop
+              $downloaded = $true
+              break
+            } catch {
+              Write-Host "Failed to download Trivy v$version"
+            }
+          }
 
-          Write-Host "Extracting Trivy..."
+          if (-not $downloaded) {
+            throw "Failed to download any of the fallback Trivy versions."
+          }
+
           Expand-Archive -Path $zipPath -DestinationPath $extractPath -Force
-
           $trivyExe = Join-Path $extractPath "trivy.exe"
-          Write-Host "Running Trivy scan..."
           & $trivyExe image --exit-code 1 --severity CRITICAL,HIGH "$(acrName).azurecr.io/$(imageName):$(Build.BuildId)"
