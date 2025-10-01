@@ -1,0 +1,31 @@
+trigger:
+  branches:
+    include:
+      - main
+
+variables:
+  imageName: 'claim-status-api'
+  tag: '$(Build.BuildId)'
+  acrName: 'prathapacr'
+  azureSubscription: 'azure-connection'
+  resourceGroup: 'prathapRG'
+
+stages:
+- stage: BuildAndPush
+  displayName: Build and Push Docker Image
+  jobs:
+  - job: Build
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - task: Checkout@v2
+
+    - task: Docker@2
+      displayName: Build and Push to ACR
+      inputs:
+        containerRegistry: '$(azureSubscription)'
+        repository: '$(imageName)'
+        command: 'buildAndPush'
+        Dockerfile: 'src/Dockerfile'
+        tags: |
+          $(tag)
