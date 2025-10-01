@@ -45,7 +45,7 @@ stages:
       name: Default
     steps:
     - script: |
-        Write-Host "Defender for Containers will auto-scan the image in ACR."
+        echo Defender for Containers will auto-scan the image in ACR.
       displayName: "Info: Defender for Containers enabled"
 
     - script: |
