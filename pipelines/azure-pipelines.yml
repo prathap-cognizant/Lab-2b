@@ -76,7 +76,7 @@ stages:
       inputs:
         targetType: 'inline'
         script: |
-          $trivyUrl = "https://github.com/aquasecurity/trivy/releases/download/v0.67.0/trivy_0.67.0_Windows-64bit.zip"
+          $trivyUrl = "https://github.com/aquasecurity/trivy/releases/download/v0.66.0/trivy_0.66.0_Windows-64bit.zip"
           $zipPath = "$(System.DefaultWorkingDirectory)\trivy.zip"
           $extractPath = "$(System.DefaultWorkingDirectory)\trivy"
 
