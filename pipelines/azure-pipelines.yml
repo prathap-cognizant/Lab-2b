@@ -71,18 +71,18 @@ stages:
     pool:
       name: Default
     steps:
-    - task: AzureCLI@2
-      displayName: Deploy Resources with Bicep
+    - task: PowerShell@2
+      displayName: "Run Trivy Scan"
       inputs:
-        azureSubscription: 'genai-devops-svc-ch-1'
-        scriptType: 'ps'
-        scriptLocation: 'inlineScript'
-        inlineScript: |
-          az group create --name $(resourceGroup) --location $(location)
-          az deployment group create `
-            --resource-group $(resourceGroup) `
-            --template-file pipelines/infra/main.bicep `
-            --parameters containerAppName=$(containerAppName) `
-                         containerImage=$(acrName).azurecr.io/$(imageName):$(Build.BuildId) `
-                         acrName=$(acrName) `
-                         apimName=$(apimName)
+        targetType: 'inline'
+        script: |
+          $version = "v0.66.0"
+          $trivyUrl = "https://github.com/aquasecurity/trivy/releases/download/$version/trivy_$($version)_Windows-64bit.zip"
+          $zipPath = "trivy.zip"
+          $extractPath = "$(System.DefaultWorkingDirectory)\trivy"
+
+          Invoke-WebRequest -Uri $trivyUrl -OutFile $zipPath
+          Expand-Archive -Path $zipPath -DestinationPath $extractPath
+          $trivyExe = Join-Path $extractPath "trivy.exe"
+
+          & $trivyExe image --exit-code 1 --severity CRITICAL,HIGH "$(acrName).azurecr.io/$(imageName):$(Build.BuildId)"
