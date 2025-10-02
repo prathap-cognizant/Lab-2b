@@ -5,8 +5,8 @@ const { summarizeNotes } = require('./openai');
 const app = express();
 app.use(express.json());
 
-const claims = JSON.parse(fs.readFileSync('../mocks/claims.json'));
-const notes = JSON.parse(fs.readFileSync('../mocks/notes.json'));
+const claims = JSON.parse(fs.readFileSync('./mocks/claims.json'));
+const notes = JSON.parse(fs.readFileSync('./mocks/notes.json'));
 
 app.get('/claims/:id', (req, res) => {
   const claim = claims[req.params.id];
@@ -15,6 +15,11 @@ app.get('/claims/:id', (req, res) => {
   } else {
     res.status(404).json({ error: 'Claim not found' });
   }
+});
+
+
+app.get('/health', (req, res) => {
+  res.status(200).send('OK');
 });
 
 app.post('/claims/:id/summarize', async (req, res) => {
