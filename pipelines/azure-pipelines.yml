@@ -52,6 +52,9 @@ stages:
         dockerImageName: '$(acrName).azurecr.io/$(imageName):$(Build.BuildId)'
         severityThreshold: 'high'   # Fail pipeline if vulnerabilities >= high
         monitorWhen: 'always'       # Upload results to Snyk dashboard
+      env:
+        SNYK_DISABLE_SSL: 'true'
+
 
 
 # -------------------
