@@ -1,0 +1,76 @@
+openapi: 3.0.3
+info:
+  title: Claim Status API
+  version: 1.0.0
+  description: API for retrieving claim details and summarizing claim notes.
+
+servers:
+  - url: http://localhost:3000
+    description: Local development server
+
+paths:
+  /claims/{id}:
+    get:
+      summary: Get claim details by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Claim ID
+      responses:
+        '200':
+          description: Claim details retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  claimId: "123"
+                  status: "Approved"
+                  amount: 500
+        '404':
+          description: Claim not found
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error: "Claim not found"
+
+  /claims/{id}/summarize:
+    post:
+      summary: Summarize notes for a claim
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Claim ID
+      responses:
+        '200':
+          description: Summary generated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  summary: "Patient visited for routine check-up. No major issues."
+        '404':
+          description: Notes not found for claim
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error: "Notes not found for claim"
+        '500':
+          description: Failed to summarize notes
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error: "Failed to summarize notes"

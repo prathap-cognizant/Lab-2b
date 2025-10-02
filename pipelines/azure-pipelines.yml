@@ -67,18 +67,16 @@ stages:
       name: Default
     steps:
     - task: AzureCLI@2
-      displayName: "Deploy API to APIM"
+      displayName: Deploy API to APIM
       inputs:
         azureSubscription: 'genai-devops-svc-ch-1'
         scriptType: 'ps'
         scriptLocation: 'inlineScript'
         inlineScript: |
-          # Example: Import OpenAPI spec or configure API in APIM
-          # Replace with actual deployment logic
-          az apim api import --resource-group $(resourceGroup) `
-                             --service-name $(apimName) `
-                             --path claim-status `
-                             --api-id claim-status-api `
-                             --specification-format OpenApi `
-                             --specification-path src/openapi.yaml `
-                             --display-name "Claim Status API"
+          az apim api import `
+            --resource-group $(resourceGroup) `
+            --service-name $(apimName) `
+            --path claim-status `
+            --api-id claim-status-api `
+            --specification-format OpenApi `
+            --specification-path src/openapi.yaml
