@@ -4,7 +4,7 @@
     const endpoint = process.env.OPENAI_ENDPOINT;
     const apiKey = process.env.OPENAI_API_KEY;
 
-    const response = await axios.post(`${endpoint}/openai/deployments/YOUR_DEPLOYMENT_NAME/chat/completions?api-version=2023-03-15-preview`, {
+    const response = await axios.post(`${endpoint}/openai/deployments/gpt-5-mini/chat/completions?api-version=2023-03-15-preview`, {
       messages: [
         { role: "system", content: "Summarize the following medical note." },
         { role: "user", content: noteText }

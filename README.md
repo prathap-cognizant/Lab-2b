@@ -18,7 +18,21 @@ Deploys the image to Azure Container Apps
 Imports an OpenAPI spec into Azure API Management with the Container App URL as backend
 Uses variables for image name, ACR name, resource group, container app name, APIM name, and location.
 
+## KQL query
+### API Errors (APIM):
+requests
+| where success == false
+| summarize ErrorCount = count() by name, bin(timestamp, 5m)
+| render timechart
 
+### High Latency Calls:
+requests
+| summarize AvgDuration = avg(duration) by name, bin(timestamp, 5m)
+
+### Container App Errors
+ContainerAppConsoleLogs_CL
+| where Log_s contains "error"
+| summarize count() by ContainerAppName_s, bin(TimeGenerated, 5m)
 
 
 Author,
