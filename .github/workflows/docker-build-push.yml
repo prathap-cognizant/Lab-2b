@@ -31,3 +31,11 @@ jobs:
         IMAGE_TAG=${{ github.run_id }}
         docker build -t $ACR_NAME.azurecr.io/$IMAGE_NAME:$IMAGE_TAG -f src/Dockerfile src
         docker push $ACR_NAME.azurecr.io/$IMAGE_NAME:$IMAGE_TAG
+
+    - name: Deploy to Azure Container Apps
+      run: |
+        IMAGE_TAG=${{ github.run_id }}
+        az containerapp update \
+          --name claim-status-app \
+          --resource-group prathapRG \
+          --image $ACR_NAME.azurecr.io/$IMAGE_NAME:$IMAGE_TAG
