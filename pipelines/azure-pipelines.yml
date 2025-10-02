@@ -1,3 +1,4 @@
+
 trigger:
   branches:
     include:
@@ -59,15 +60,43 @@ stages:
 # 3. Deploy Stage
 # -------------------
 - stage: Deploy
-  displayName: Deploy ACA and APIM using Bicep
+  displayName: Deploy ACA and Expose API in APIM
   dependsOn: Build
   jobs:
   - job: Deploy
     pool:
       name: Default
     steps:
+    # Deploy Container App
     - task: AzureCLI@2
-      displayName: Deploy API to APIM
+      displayName: Deploy Container App
+      inputs:
+        azureSubscription: 'genai-devops-svc-ch-1'
+        scriptType: 'ps'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          # Update or create Container App
+          az containerapp update `
+            --name $(containerAppName) `
+            --resource-group $(resourceGroup) `
+            --image $(acrName).azurecr.io/$(imageName):$(Build.BuildId) `
+            --cpu 0.5 `
+            --memory 1.0Gi
+
+          # Get Container App FQDN
+          $appUrl = az containerapp show `
+            --name $(containerAppName) `
+            --resource-group $(resourceGroup) `
+            --query properties.configuration.ingress.fqdn `
+            --output tsv
+          Write-Host "Container App URL: $appUrl"
+
+          # Save URL for next step
+          echo "##vso[task.setvariable variable=containerAppUrl]https://$appUrl"
+
+    # Import API into APIM
+    - task: AzureCLI@2
+      displayName: Import API into APIM
       inputs:
         azureSubscription: 'genai-devops-svc-ch-1'
         scriptType: 'ps'
@@ -79,4 +108,5 @@ stages:
             --path claim-status `
             --api-id claim-status-api `
             --specification-format OpenApi `
-            --specification-path src/openapi.yaml
+            --specification-path src/openapi.yaml `
+            --service-url $(containerAppUrl)
