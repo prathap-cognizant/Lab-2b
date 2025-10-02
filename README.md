@@ -7,3 +7,7 @@ This project implements a simple Node.js API with two endpoints:
 ## Folder Structure
 - `src/` contains the API code and Dockerfile
 - `mocks/` contains static data files
+
+
+Author,
+Prathap Mathiyalagan
