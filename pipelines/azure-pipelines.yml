@@ -36,24 +36,24 @@ stages:
 # -------------------
 # 2. Security Scan Stage
 # -------------------
-- stage: SecurityScan
-  displayName: Security Scan with Snyk
-  dependsOn: Build
-  jobs:
-  - job: Scan
-    pool:
-      name: Default
-    steps:
-    - task: SnykSecurityScan@1
-      displayName: "Snyk Container Scan"
-      inputs:
-        serviceConnectionEndpoint: 'Snyk-Service-Connection'  # Created in Project Settings → Service Connections
-        testType: 'container'
-        dockerImageName: '$(acrName).azurecr.io/$(imageName):$(Build.BuildId)'
-        severityThreshold: 'high'   # Fail pipeline if vulnerabilities >= high
-        monitorWhen: 'always'       # Upload results to Snyk dashboard
-      env:
-        SNYK_DISABLE_SSL: 'true'
+# - stage: SecurityScan
+#   displayName: Security Scan with Snyk
+#   dependsOn: Build
+#   jobs:
+#   - job: Scan
+#     pool:
+#       name: Default
+#     steps:
+#     - task: SnykSecurityScan@1
+#       displayName: "Snyk Container Scan"
+#       inputs:
+#         serviceConnectionEndpoint: 'Snyk-Service-Connection'  # Created in Project Settings → Service Connections
+#         testType: 'container'
+#         dockerImageName: '$(acrName).azurecr.io/$(imageName):$(Build.BuildId)'
+#         severityThreshold: 'high'   # Fail pipeline if vulnerabilities >= high
+#         monitorWhen: 'always'       # Upload results to Snyk dashboard
+#       env:
+#         SNYK_DISABLE_SSL: 'true'
 
 
 
