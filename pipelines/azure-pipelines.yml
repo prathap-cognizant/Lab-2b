@@ -47,15 +47,13 @@ stages:
     - task: SnykSecurityScan@1
       displayName: "Snyk Container Scan"
       inputs:
-        serviceConnectionEndpoint: 'Snyk-Service-Connection'  # Created in Project Settings → Service Connections
+        serviceConnectionEndpoint: 'Snyk-Service-Connection'
         testType: 'container'
         dockerImageName: '$(acrName).azurecr.io/$(imageName):$(Build.BuildId)'
-        severityThreshold: 'high'   # Fail pipeline if vulnerabilities >= high
-        monitorWhen: 'always'       # Upload results to Snyk dashboard
+        severityThreshold: 'high'
+        monitorWhen: 'always'
       env:
         SNYK_DISABLE_SSL: 'true'
-
-
 
 # -------------------
 # 3. Deploy Stage
@@ -68,32 +66,19 @@ stages:
     pool:
       name: Default
     steps:
-    - task: PowerShell@2
-      displayName: "Run Trivy Scan"
+    - task: AzureCLI@2
+      displayName: "Deploy API to APIM"
       inputs:
-        targetType: 'inline'
-        script: |
-          $versions = @("0.67.0", "0.66.0", "0.43.1")
-          $zipPath = "$(System.DefaultWorkingDirectory)\trivy.zip"
-          $extractPath = "$(System.DefaultWorkingDirectory)\trivy"
-          $downloaded = $false
-
-          foreach ($version in $versions) {
-            $url = "https://github.com/aquasecurity/trivy/releases/download/v$version/trivy_${version}_Windows-64bit.zip"
-            Write-Host "Trying Trivy version $version from $url"
-            try {
-              Invoke-WebRequest -Uri $url -OutFile $zipPath -ErrorAction Stop
-              $downloaded = $true
-              break
-            } catch {
-              Write-Host "Failed to download Trivy v$version"
-            }
-          }
-
-          if (-not $downloaded) {
-            throw "Failed to download any of the fallback Trivy versions."
-          }
-
-          Expand-Archive -Path $zipPath -DestinationPath $extractPath -Force
-          $trivyExe = Join-Path $extractPath "trivy.exe"
-          & $trivyExe image --exit-code 1 --severity CRITICAL,HIGH "$(acrName).azurecr.io/$(imageName):$(Build.BuildId)"
+        azureSubscription: 'genai-devops-svc-ch-1'
+        scriptType: 'ps'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          # Example: Import OpenAPI spec or configure API in APIM
+          # Replace with actual deployment logic
+          az apim api import --resource-group $(resourceGroup) `
+                             --service-name $(apimName) `
+                             --path claim-status `
+                             --api-id claim-status-api `
+                             --specification-format OpenApi `
+                             --specification-path src/openapi.yaml `
+                             --display-name "Claim Status API"
