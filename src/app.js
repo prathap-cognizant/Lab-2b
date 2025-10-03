@@ -17,22 +17,35 @@ app.get('/claims/:id', (req, res) => {
   }
 });
 
-
 app.get('/health', (req, res) => {
   res.status(200).send('OK');
 });
 
 app.post('/claims/:id/summarize', async (req, res) => {
   const note = notes[req.params.id];
+
   if (!note) {
     return res.status(404).json({ error: 'Notes not found for claim' });
   }
 
   try {
-    const summary = await summarizeNotes(note);
-    res.json({ summary });
+    console.log(`Summarizing note for claim ${req.params.id}:`, note);
+
+    const result = await summarizeNotes(note);
+
+    if (!result.summary || result.summary.trim() === "" || result.summary === "No summary generated") {
+      console.warn(`No structured summary generated for claim ${req.params.id}`);
+      return res.json({
+        summary: "No summary available for this note.",
+        customerSummary: "",
+        adjusterSummary: "",
+        nextStep: ""
+      });
+    }
+
+    res.json(result);
   } catch (err) {
-    console.error(err);
+    console.error("Summarization error:", err.message);
     res.status(500).json({ error: 'Failed to summarize notes' });
   }
 });
